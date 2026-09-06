@@ -1,0 +1,150 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: EAB Extender 1.0.11\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "&Activate"
+msgstr "&Aktivieren"
+
+msgid "&Announce new mouse coordinates when mouse moves"
+msgstr "Neue Mauskoordinaten bei Mausbewegungen &ansagen"
+
+msgid "&Close"
+msgstr "&Schließen"
+
+msgid "&Define"
+msgstr "&Definieren"
+
+msgid "&Delete"
+msgstr "&Löschen"
+
+msgid "&New"
+msgstr "&Neu"
+
+msgid "&OK"
+msgstr "&OK"
+
+msgid "&Rename"
+msgstr "&Umbenennen"
+
+msgid "&Saved profiles"
+msgstr "&Gespeicherte Profile"
+
+msgid "Accord"
+msgstr "Tastenkombination"
+
+msgid "Activate profile"
+msgstr "Profil aktivieren"
+
+msgid "Another profile has the same name as the entered name. Please choose a different name."
+msgstr "Ein anderes Profil hat bereits diesen Namen. Bitte wählen Sie einen anderen Namen."
+
+msgid "Are you sure you want to delete the profile named {name}? This cannot be undone."
+msgstr "Möchten Sie das Profil „{name}“ wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden."
+
+msgid "Braille"
+msgstr "Braille"
+
+msgid "Configuration"
+msgstr "Konfiguration"
+
+msgid "Defining profile {profileName} for {aName}"
+msgstr "Profil {profileName} für {aName} bearbeiten"
+
+msgid "Delete profile"
+msgstr "Profil löschen"
+
+msgid "Do you want to activate the profile named {name}?"
+msgstr "Möchten Sie das Profil „{name}“ aktivieren?"
+
+msgid "EABextender"
+msgstr "EAB Extender"
+
+msgid "Enter input gesture:"
+msgstr "Eingabegeste eingeben:"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Golden Cursor"
+msgstr "Golden Cursor"
+
+msgid "Golden Shortcut"
+msgstr "Golden Shortcut"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Mouse movement &unit (in pixels)"
+msgstr "Schrittweite der &Mausbewegung (in Pixeln)"
+
+msgid "Moves the braille display to the next line"
+msgstr "Verschiebt die Braillezeile zur nächsten Zeile"
+
+msgid "Moves the braille display to the previous line"
+msgstr "Verschiebt die Braillezeile zur vorherigen Zeile"
+
+msgid "NVDA default settings"
+msgstr "NVDA-Standardeinstellungen"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "New name"
+msgstr "Neuer Name"
+
+msgid "New profile"
+msgstr "Neues Profil"
+
+msgid "No profile has been created for this application yet. Click \"New\" to create a profile."
+msgstr "Für diese Anwendung wurde noch kein Profil erstellt. Klicken Sie auf „Neu“, um ein Profil zu erstellen."
+
+msgid "Opens a dialog listing profiles for the current application"
+msgstr "Öffnet ein Dialogfeld mit den Profilen für die aktuelle Anwendung"
+
+msgid "Please choose a different name."
+msgstr "Bitte wählen Sie einen anderen Namen."
+
+msgid "Please create some profiles."
+msgstr "Bitte erstellen Sie zunächst ein Profil."
+
+msgid "Press Enter, then press the key or keyboard shortcut you want to assign to this EAB action"
+msgstr "Drücken Sie die Eingabetaste und anschließend die Taste oder Tastenkombination, die Sie dieser EAB-Aktion zuweisen möchten"
+
+msgid "Profile name"
+msgstr "Profilname"
+
+msgid "Profile selector for %s"
+msgstr "Profilauswahl für %s"
+
+msgid "Rename"
+msgstr "Umbenennen"
+
+msgid "Saved profiles"
+msgstr "Gespeicherte Profile"
+
+msgid "Scrolls the braille display back"
+msgstr "Scrollt die Braillezeile zurück"
+
+msgid "Scrolls the braille display forward"
+msgstr "Scrollt die Braillezeile vorwärts"
+
+msgid "Shortcut"
+msgstr "Tastenkürzel"
+
+msgid "Shows NVDA's braille settings"
+msgstr "Zeigt die Braille-Einstellungen von NVDA an"
+
+msgid "Sorry, something went terribly wrong."
+msgstr "Entschuldigung, es ist ein schwerwiegender Fehler aufgetreten."
+
+msgid "Sorry, something went wrong."
+msgstr "Entschuldigung, es ist ein Fehler aufgetreten."
+
+msgid "This shortCut is not valid, choose another one please"
+msgstr "Dieses Tastenkürzel ist ungültig. Bitte wählen Sie ein anderes."
+

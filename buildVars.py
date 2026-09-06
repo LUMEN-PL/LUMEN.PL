@@ -25,7 +25,7 @@ addon_info = {
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("Allows you to assign keyboard shortcuts to braille accords in Papenmeier braille terminals."),
 	# version
-	"addon_version": "1.0",
+	"addon_version": "1.0.14",
 	# Author(s)
 	"addon_author": "LUMEN PL",
 	# URL for the add-on documentation support
