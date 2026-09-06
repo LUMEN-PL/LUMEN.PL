@@ -14,6 +14,7 @@ import os
 from configobj import ConfigObj
 import globalPluginHandler
 import inputCore
+import keyboardHandler
 import gui
 import wx
 import config
@@ -85,19 +86,21 @@ class AccordInputDialog(wx.Dialog):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         sHelper = gui.guiHelper.BoxSizerHelper(self, orientation=wx.VERTICAL)
         # Translators: The label for the list view of the accords for the current profile.
-        accordsText = _("&Shorcut list")
+        accordsText = _('Press Enter, then press the key or keyboard shortcut you want to assign to this EAB action')
         self.ListAccordList = sHelper.addLabeledControl(
-            accordsText, wx.ListCtrl, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, size=(600, 350)
+            accordsText, wx.ListCtrl, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, size=(900, 350)
         )
         self.ListAccordList.Bind(wx.EVT_KEY_DOWN, self.onListKeyDown)
         
         self.ListAccordList.InsertColumn(0, _("Accord"), width=250)
-        self.ListAccordList.InsertColumn(1, _("Shortcut"), width=350)
+        self.ListAccordList.InsertColumn(1, _("Shortcut"), width=300)
+        self.ListAccordList.InsertColumn(2, "NVDA", width=350)
         self.ListAccordList.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onGetShortcut)            
         
         
         for entry in self.accords.keys():
-            self.ListAccordList.Append((entry,self.accords[entry]))
+            shortcut = self.accords[entry]
+            self.ListAccordList.Append((entry, shortcut, self.getNvdaFunction(shortcut)))
             
         self.ListAccordList.Select(0, on=1)
         self.ListAccordList.SetItemState(0, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
@@ -171,6 +174,47 @@ class AccordInputDialog(wx.Dialog):
         event.Skip()
         
 
+    def getNvdaFunction(self, shortcut):
+        """Return the command NVDA actually resolves for this keyboard shortcut."""
+        if not shortcut:
+            return ""
+        try:
+            # This follows the same effective route as NVDA Input Help:
+            # build a real keyboard gesture and ask NVDA which script is bound to it.
+            gesture = keyboardHandler.KeyboardInputGesture.fromName(shortcut)
+            script = gesture.script
+            if script:
+                description = getattr(script, "__doc__", None)
+                if description:
+                    return description.strip()
+                try:
+                    return scriptHandler.getScriptName(script)
+                except Exception:
+                    return getattr(script, "__name__", "")
+        except Exception:
+            log.exception("Cannot directly resolve NVDA command for shortcut %r", shortcut)
+
+        # Fallback: inspect the mappings exposed to the Input Gestures dialog.
+        try:
+            gestureId = inputCore.normalizeGestureIdentifier("kb:" + shortcut)
+            mappings = inputCore.manager.getAllGestureMappings()
+            matches = []
+            for category in mappings.values():
+                for displayName, scriptInfo in category.items():
+                    for gestureIdentifier in scriptInfo.gestures:
+                        try:
+                            normalized = inputCore.normalizeGestureIdentifier(gestureIdentifier)
+                        except Exception:
+                            continue
+                        if normalized == gestureId:
+                            if displayName not in matches:
+                                matches.append(displayName)
+                            break
+            return " / ".join(matches)
+        except Exception:
+            log.exception("Cannot resolve mapped NVDA command for shortcut %r", shortcut)
+            return ""
+
     def getValue(self):
         return ",".join([
             self.accords["EAB left"],
@@ -214,6 +258,7 @@ class AccordInputDialog(wx.Dialog):
             return
         self.accords[name]=shortCut
         self.ListAccordList.SetItem(index,1,shortCut)
+        self.ListAccordList.SetItem(index,2,self.getNvdaFunction(shortCut))
         self.ListAccordList.SetFocus()
 
 
@@ -309,23 +354,32 @@ class ProfileList(wx.Dialog):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         sHelper = gui.guiHelper.BoxSizerHelper(self, orientation=wx.VERTICAL)
         # Translators: The label for the list view of the profiles in the current application.
-        profilesText = _("&Saved profiles")
+        # NVDA announces the label associated with the list control, not only the
+        # control's accessible name. Therefore the label itself must change when
+        # there are no profiles.
+        hasProfiles = any(entry != "activProf" for entry in self.profiles.keys())
+        if hasProfiles:
+            profilesText = _("&Saved profiles")
+        else:
+            profilesText = _('No profile has been created for this application yet. Click "New" to create a profile.')
         self.ListProfileList = sHelper.addLabeledControl(
             profilesText, wx.ListCtrl, style=wx.LC_REPORT | wx.LC_SINGLE_SEL, size=(550, 350)
         )
+        self.profileListLabel = self.ListProfileList.GetPrevSibling()
         
         self.ListProfileList.Bind(wx.EVT_KEY_DOWN, self.onListKeyDown)
         self.listItems()
+        self.updateProfileListAccessibleName()
 		
         bHelper = gui.guiHelper.ButtonHelper(orientation=wx.HORIZONTAL)
 
         activateButtonID = wx.NewIdRef()
         # Translators: the button to activate a profile position.
-        bHelper.addButton(self, activateButtonID, _("&OK"), wx.DefaultPosition)
+        self.activateButton = bHelper.addButton(self, activateButtonID, _("&OK"), wx.DefaultPosition)
 
         defineButtonID = wx.NewIdRef()
         # Translators: the button to define the shortcuts for this profile.
-        bHelper.addButton(self, defineButtonID, _("&Define"), wx.DefaultPosition)
+        self.defineButton = bHelper.addButton(self, defineButtonID, _("&Define"), wx.DefaultPosition)
 
         renameButtonID = wx.NewIdRef()
         # Translators: the button to rename a profile name.
@@ -337,7 +391,7 @@ class ProfileList(wx.Dialog):
 
         newButtonID = wx.NewIdRef()
         # Translators: the button to create a new profile for this app.
-        bHelper.addButton(self, newButtonID, _("&New"), wx.DefaultPosition)
+        self.newButton = bHelper.addButton(self, newButtonID, _("&New"), wx.DefaultPosition)
 
         # Translators: The label of a button to close the profile listing dialog.
         bHelper.addButton(self, wx.ID_CLOSE, _("&Close"), wx.DefaultPosition)
@@ -362,6 +416,16 @@ class ProfileList(wx.Dialog):
         self.ListProfileList.SetFocus()
         self.CenterOnScreen()
         
+    def updateProfileListAccessibleName(self):
+        """Update the accessible name and the label associated with the profile list."""
+        if self.ListProfileList.GetItemCount() == 0:
+            label = _('No profile has been created for this application yet. Click "New" to create a profile.')
+        else:
+            label = _("Saved profiles")
+        self.ListProfileList.SetName(label)
+        if getattr(self, "profileListLabel", None):
+            self.profileListLabel.SetLabel(label)
+
     def listItems(self):
         # Translators: the column in profile list to identify the profile name.
         self.ListProfileList.InsertColumn(0, _("Name"), width=150)
@@ -432,7 +496,7 @@ class ProfileList(wx.Dialog):
             parent = self,
             message = _("Profile name"),
             caption = _("New profile"),
-            value=""
+            value=_("NVDA default settings")
         )
         
         name=""
@@ -456,6 +520,7 @@ class ProfileList(wx.Dialog):
             return
         self.ListProfileList.InsertItem(self.ListProfileList.GetItemCount(),name)
         
+        self.updateProfileListAccessibleName()
         # this are the shortcuts mapped to default papenmeier NVDA actions
         # the routing keyboard shortcuts are already in NVDA
         # for the EAB left/right/up/down we need to extra code the assignment of the action to the keyboard shortcut
@@ -470,7 +535,7 @@ class ProfileList(wx.Dialog):
         self.ListProfileList.Select(selectedIndex, on=1)
         self.ListProfileList.SetItemState(selectedIndex, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
             
-        self.ListProfileList.SetFocus()
+        wx.CallAfter(self.defineButton.SetFocus)
 
     def onDelete(self,event):
         if self.ListProfileList.GetItemCount() == 0:
@@ -504,6 +569,7 @@ class ProfileList(wx.Dialog):
         del self.profiles[name]
         self.ListProfileList.DeleteItem(entry)
 
+        self.updateProfileListAccessibleName()
         if self.ListProfileList.GetItemCount() > 0:
             self.ListProfileList.Select(0, on=1)    
             if delActive:
@@ -539,7 +605,8 @@ class ProfileList(wx.Dialog):
         
     def onDefine(self,event):
         if self.ListProfileList.GetItemCount() == 0:
-            ui.message(_("Please create some profiles."))
+            ui.message(_('No profile has been created for this application yet. Click "New" to create a profile.'))
+            wx.CallAfter(self.newButton.SetFocus)
             log.warning("Define: cannot define an empty profile.")
             #gui.messageBox(
                 # Translators: An error trying to define a profile when there isnt any
@@ -557,6 +624,9 @@ class ProfileList(wx.Dialog):
         if result==wx.ID_OK:
             accordStr=self.profileDefinitionDialog.getValue()
             self.profiles[profileName]=accordStr
+            # After closing the Define dialog with OK, move focus
+            # to the OK button in the main profile dialog.
+            wx.CallAfter(self.activateButton.SetFocus)
             #log.warning(accordStr)
 
     def onClose(self, evt):
